@@ -29,7 +29,7 @@ services:
       - "POSTGRES_USER=${POSTGRES_USER}"
       - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
     volumes:
-      - db_volume:/var/lib/postgresql
+      - db_volume:/var/lib/postgresql/data
     networks:
       - database
 

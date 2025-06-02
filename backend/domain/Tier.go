@@ -1,29 +1,46 @@
 package domain
 
-import "fmt"
-
-type Tier struct {
-	name string
-}
-
-func (r Tier) String() string { return r.name }
-
-var (
-	UnknownTier = Tier{""}
-	GuestTier   = Tier{"guest"}
-	BasicTier   = Tier{"basic"}
-	PremiumTier = Tier{"premium"}
+import (
+	"database/sql/driver"
+	"fmt"
 )
 
-func TierFromString(s string) (Tier, error) {
-	switch s {
-	case GuestTier.name:
-		return GuestTier, nil
-	case BasicTier.name:
-		return BasicTier, nil
-	case PremiumTier.name:
-		return PremiumTier, nil
+type Tier string
+
+const (
+	GuestTier   Tier = "guest"
+	FreeTier    Tier = "free"
+	PremiumTier Tier = "premium"
+)
+
+func (t Tier) Value() (driver.Value, error) {
+	switch t {
+	case GuestTier, FreeTier, PremiumTier:
+		return string(t), nil
 	default:
-		return UnknownTier, fmt.Errorf("unknown tier: %s", s)
+		return nil, fmt.Errorf("invalid Tier value: %s", t)
 	}
+}
+
+func (t *Tier) Scan(value interface{}) error {
+	strVal, ok := value.(string)
+	if !ok {
+		byteVal, ok := value.([]byte)
+		if !ok {
+			return fmt.Errorf("failed to scan Tier: value is not string or []byte, got %T", value)
+		}
+		strVal = string(byteVal)
+	}
+	scannedTier := Tier(strVal)
+	switch scannedTier {
+	case GuestTier, FreeTier, PremiumTier:
+		*t = scannedTier
+		return nil
+	default:
+		return fmt.Errorf("invalid value for Tier from DB: %s", strVal)
+	}
+}
+
+func (t Tier) String() string {
+	return string(t)
 }
