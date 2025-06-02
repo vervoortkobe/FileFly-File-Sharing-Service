@@ -24,7 +24,7 @@ func main() {
 
 	app := fiber.New()
 
-	dsn := "host=localhost user=postgres password=abc123 dbname=postgres port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+	dsn := "host=localhost user=" + os.Getenv("POSTGRES_USER") + " password=" + os.Getenv("POSTGRES_PASSWORD") + " dbname=" + os.Getenv("POSTGRES_DB") + " port=5432 sslmode=disable TimeZone=Asia/Shanghai"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	app.Post("/register", func(c *fiber.Ctx) error {
