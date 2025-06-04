@@ -30,6 +30,7 @@ func main() {
 	app := fiber.New()
 
 	app.Post("/register", auth.HandleRegisterUser)
+	app.Post("/login", auth.HandleLoginUser)
 
 	fmt.Printf("[⚡] WebServer listening on [http://localhost:%s]!\n", PORT)
 	log.Fatal(app.Listen(":" + PORT))
