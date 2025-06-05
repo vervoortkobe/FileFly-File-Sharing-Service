@@ -15,6 +15,10 @@ func Migrate(db *gorm.DB) {
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
+	err = db.AutoMigrate(&models.File{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
 	log.Println("Database migration completed successfully.")
 }
 
