@@ -1,6 +1,10 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type File struct {
 	gorm.Model
@@ -9,4 +13,11 @@ type File struct {
 	FileName    string
 	ContentType string
 	Data        []byte `gorm:"type:bytea"`
+}
+
+type FileInfo struct {
+	ID          uint      `json:"id"`
+	FileName    string    `json:"filename"`
+	ContentType string    `json:"contentType"`
+	CreatedAt   time.Time `json:"createdAt"`
 }

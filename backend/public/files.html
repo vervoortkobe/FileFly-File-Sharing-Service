@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>List of Uploaded Files</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f7f6;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+      background-color: #fff;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #3498db;
+      color: white;
+      font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    a {
+      color: #2980b9;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .no-files {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 1.2em;
+      color: #7f8c8d;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .upload-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.1em;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Uploaded Files</h1>
+    <p class="upload-link"><a href="/">Upload a new file</a></p>
+
+    <table id="filesTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Filename</th>
+          <th>Content Type</th>
+          <th>Uploaded At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- File rows will be inserted here by JavaScript -->
+      </tbody>
+    </table>
+    <div id="noFilesMessage" class="no-files" style="display: none;">
+      No files found.
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const tableBody = document.querySelector('#filesTable tbody');
+      const noFilesMessage = document.getElementById('noFilesMessage');
+
+      fetch('/api/files') // Assuming your API is at this path
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(files => {
+          if (files && files.length > 0) {
+            files.forEach(file => {
+              const row = tableBody.insertRow();
+
+              const cellId = row.insertCell();
+              cellId.textContent = file.id;
+
+              const cellFilename = row.insertCell();
+              cellFilename.textContent = file.filename;
+
+              const cellContentType = row.insertCell();
+              cellContentType.textContent = file.contentType || 'N/A';
+
+              const cellCreatedAt = row.insertCell();
+              cellCreatedAt.textContent = new Date(file.createdAt).toLocaleString();
+
+              const cellActions = row.insertCell();
+              const downloadLink = document.createElement('a');
+              downloadLink.href = `/api/download/${file.id}`;
+              downloadLink.textContent = 'Download';
+              downloadLink.target = '_blank'; // Optional: open in new tab
+              cellActions.appendChild(downloadLink);
+            });
+          } else {
+            document.querySelector('#filesTable').style.display = 'none';
+            noFilesMessage.style.display = 'block';
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching files:', error);
+          tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error loading files. Check console.</td></tr>';
+          noFilesMessage.style.display = 'none';
+        });
+    });
+  </script>
+</body>
+
+</html>
