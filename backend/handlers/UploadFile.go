@@ -37,8 +37,8 @@ func UploadFile(c *fiber.Ctx) error {
 	}
 
 	dbFile := models.File{
-		UserId: uint(0),
-		//UserId:    c.Locals("user_id").(uint),
+		UserID: uint(0),
+		//UserID:    c.Locals("user_id").(uint),
 		FileName:    fileHeader.Filename,
 		ContentType: fileHeader.Header.Get("Content-Type"),
 		Data:        fileBytes,

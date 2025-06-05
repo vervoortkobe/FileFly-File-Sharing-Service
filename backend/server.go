@@ -10,6 +10,7 @@ import (
 	"server/handlers"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -28,7 +29,11 @@ func main() {
 	defer db.Close()
 	db.Migrate(db.GetDB())
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 50 * 1024 * 1024,
+	})
+
+	app.Use(logger.New())
 
 	app.Static("/", "./public")
 
@@ -36,10 +41,14 @@ func main() {
 		return c.SendString("Hello world!")
 	})
 
-	app.Post("/upload", handlers.UploadFile)
+	api := app.Group("/api")
 
-	app.Post("/register", auth.HandleRegisterUser)
-	app.Post("/login", auth.HandleLoginUser)
+	api.Post("/register", auth.HandleRegisterUser)
+	api.Post("/login", auth.HandleLoginUser)
+
+	api.Post("/upload", handlers.UploadFile)
+	api.Get("/download/:id", handlers.DownloadFile)
+	api.Get("/files", handlers.ListFiles)
 
 	fmt.Printf("[⚡] WebServer listening on [http://localhost:%s]!\n", PORT)
 	log.Fatal(app.Listen(":" + PORT))
