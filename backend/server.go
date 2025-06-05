@@ -8,6 +8,7 @@ import (
 	"server/auth"
 	"server/db"
 	"server/handlers"
+	"server/models"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -38,7 +39,9 @@ func main() {
 	app.Static("/", "./public")
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello world!")
+		var fileCount int64
+		db.GetDB().Model(&models.File{}).Count(&fileCount)
+		return c.SendString("Files: " + fmt.Sprintf("%d", fileCount))
 	})
 
 	api := app.Group("/api")
@@ -46,9 +49,9 @@ func main() {
 	api.Post("/register", auth.HandleRegisterUser)
 	api.Post("/login", auth.HandleLoginUser)
 
+	api.Get("/files", handlers.ListFiles)
 	api.Post("/upload", handlers.UploadFile)
 	api.Get("/download/:id", handlers.DownloadFile)
-	api.Get("/files", handlers.ListFiles)
 
 	fmt.Printf("[⚡] WebServer listening on [http://localhost:%s]!\n", PORT)
 	log.Fatal(app.Listen(":" + PORT))
