@@ -2,7 +2,7 @@ package db
 
 import (
 	"log"
-	"server/domain"
+	"server/models"
 
 	"gorm.io/gorm"
 )
@@ -11,7 +11,11 @@ func Migrate(db *gorm.DB) {
 	registerEnums()
 
 	log.Println("Running database migrations...")
-	err = db.AutoMigrate(&domain.User{})
+	err = db.AutoMigrate(&models.User{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+	err = db.AutoMigrate(&models.File{})
 	if err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}

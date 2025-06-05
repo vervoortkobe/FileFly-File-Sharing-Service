@@ -7,6 +7,7 @@ import (
 
 	"server/auth"
 	"server/db"
+	"server/handlers"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -29,7 +30,14 @@ func main() {
 
 	app := fiber.New()
 
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Hello world!")
+	})
+
+	app.Post("/upload", handlers.UploadFile)
+
 	app.Post("/register", auth.HandleRegisterUser)
+	app.Post("/login", auth.HandleLoginUser)
 
 	fmt.Printf("[⚡] WebServer listening on [http://localhost:%s]!\n", PORT)
 	log.Fatal(app.Listen(":" + PORT))

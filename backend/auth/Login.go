@@ -4,19 +4,19 @@ import (
 	"errors"
 	"log"
 	"server/db"
-	"server/domain"
+	"server/models"
 
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
 func HandleLoginUser(c *fiber.Ctx) error {
-	payload := new(domain.LoginUser)
+	payload := new(models.LoginUser)
 	if err := c.BodyParser(payload); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse JSON"})
 	}
 
-	var user domain.User
+	var user models.User
 	result := db.GetDB().Where("email = ?", payload.Email).First(&user)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {

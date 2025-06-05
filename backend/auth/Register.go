@@ -3,14 +3,14 @@ package auth
 import (
 	"log"
 	"server/db"
-	"server/domain"
+	"server/models"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func HandleRegisterUser(c *fiber.Ctx) error {
-	payload := new(domain.RegisterUser)
+	payload := new(models.RegisterUser)
 
 	if err := c.BodyParser(payload); err != nil {
 		log.Printf("Error parsing /register request body: %v\n", err)
@@ -33,11 +33,11 @@ func HandleRegisterUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Error processing registration"})
 	}
 
-	user := domain.User{
+	user := models.User{
 		Email:    payload.Email,
 		Password: hashedPassword,
-		Role:     domain.GuestRole,
-		Tier:     domain.GuestTier,
+		Role:     models.GuestRole,
+		Tier:     models.GuestTier,
 	}
 
 	result := db.GetDB().Create(&user)
