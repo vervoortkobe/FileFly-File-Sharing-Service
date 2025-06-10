@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>List of Users</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 20px;
+      background-color: #eef1f5;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 30px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background-color: #fff;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      border: 1px solid #dfe6e9;
+      padding: 12px 15px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background-color: #3498db;
+      /* A pleasant blue */
+      color: white;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    tr:hover {
+      background-color: #e9ecef;
+    }
+
+    .no-users {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 1.1em;
+      color: #7f8c8d;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+    }
+
+    .loading {
+      text-align: center;
+      margin-top: 30px;
+      font-size: 1.1em;
+      color: #3498db;
+    }
+
+    /* Optional: Style for role or tier badges */
+    .badge {
+      padding: 0.3em 0.6em;
+      font-size: 0.85em;
+      font-weight: 600;
+      border-radius: 0.25rem;
+      color: #fff;
+    }
+
+    .badge-admin {
+      background-color: #e74c3c;
+      /* Red */
+    }
+
+    .badge-editor {
+      background-color: #f39c12;
+      /* Orange */
+    }
+
+    .badge-user {
+      background-color: #2ecc71;
+      /* Green */
+    }
+
+    .badge-premium {
+      background-color: #9b59b6;
+      /* Purple */
+    }
+
+    .badge-standard {
+      background-color: #3498db;
+      /* Blue */
+    }
+
+    .badge-basic {
+      background-color: #7f8c8d;
+      /* Gray */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>User Directory</h1>
+
+    <div id="loadingMessage" class="loading">Loading users...</div>
+
+    <table id="usersTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Tier</th>
+          <th>Registered At</th>
+          <!-- Add more <th> elements if you select more fields -->
+        </tr>
+      </thead>
+      <tbody>
+        <!-- User rows will be inserted here by JavaScript -->
+      </tbody>
+    </table>
+    <div id="noUsersMessage" class="no-users" style="display: none;">
+      No users found in the system.
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const tableBody = document.querySelector('#usersTable tbody');
+      const usersTable = document.getElementById('usersTable');
+      const noUsersMessage = document.getElementById('noUsersMessage');
+      const loadingMessage = document.getElementById('loadingMessage');
+
+      fetch('/api/users') // Your backend API endpoint
+        .then(response => {
+          loadingMessage.style.display = 'none'; // Hide loading message
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(users => {
+          if (users && users.length > 0) {
+            usersTable.style.display = ''; // Show table
+            users.forEach(user => {
+              const row = tableBody.insertRow();
+
+              const cellId = row.insertCell();
+              cellId.textContent = user.ID;
+
+              const cellEmail = row.insertCell();
+              cellEmail.textContent = user.email;
+
+              const cellRole = row.insertCell();
+              // Optional: Add a badge for role
+              const roleBadge = document.createElement('span');
+              roleBadge.classList.add('badge');
+              roleBadge.classList.add(`badge-${(user.role || 'default').toLowerCase()}`); // e.g., badge-admin
+              roleBadge.textContent = user.role || 'N/A';
+              cellRole.appendChild(roleBadge);
+              // cellRole.textContent = user.role || 'N/A'; // Simpler version
+
+              const cellTier = row.insertCell();
+              // Optional: Add a badge for tier
+              const tierBadge = document.createElement('span');
+              tierBadge.classList.add('badge');
+              tierBadge.classList.add(`badge-${(user.tier || 'default').toLowerCase()}`); // e.g., badge-premium
+              tierBadge.textContent = user.tier || 'N/A';
+              cellTier.appendChild(tierBadge);
+              // cellTier.textContent = user.tier || 'N/A'; // Simpler version
+
+
+              const cellCreatedAt = row.insertCell();
+              cellCreatedAt.textContent = user.CreatedAt ? new Date(user.CreatedAt).toLocaleString() : 'N/A';
+
+              // Add more cells if you select more fields
+              // const cellSomeOtherField = row.insertCell();
+              // cellSomeOtherField.textContent = user.someOtherField || 'N/A';
+            });
+          } else {
+            noUsersMessage.style.display = 'block'; // Show "no users" message
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching users:', error);
+          loadingMessage.style.display = 'none'; // Hide loading message
+          noUsersMessage.textContent = `Error loading users: ${error.message}. Please check the console.`;
+          noUsersMessage.style.display = 'block';
+          noUsersMessage.style.color = 'red';
+        });
+    });
+  </script>
+</body>
+
+</html>
