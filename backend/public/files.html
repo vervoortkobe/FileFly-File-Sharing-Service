@@ -121,20 +121,20 @@
               const row = tableBody.insertRow();
 
               const cellId = row.insertCell();
-              cellId.textContent = file.id;
+              cellId.textContent = file.ID;
 
               const cellFilename = row.insertCell();
-              cellFilename.textContent = file.filename;
+              cellFilename.textContent = file.FileName;
 
               const cellContentType = row.insertCell();
-              cellContentType.textContent = file.contentType || 'N/A';
+              cellContentType.textContent = file.ContentType || 'N/A';
 
               const cellCreatedAt = row.insertCell();
-              cellCreatedAt.textContent = new Date(file.createdAt).toLocaleString();
+              cellCreatedAt.textContent = new Date(file.CreatedAt).toLocaleString();
 
               const cellActions = row.insertCell();
               const downloadLink = document.createElement('a');
-              downloadLink.href = `/api/download/${file.id}`;
+              downloadLink.href = `/api/download/${file.ID}`;
               downloadLink.textContent = 'Download';
               downloadLink.target = '_blank'; // Optional: open in new tab
               cellActions.appendChild(downloadLink);
