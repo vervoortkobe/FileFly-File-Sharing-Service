@@ -11,13 +11,9 @@ func Migrate(db *gorm.DB) {
 	registerEnums()
 
 	log.Println("Running database migrations...")
-	err = db.AutoMigrate(&models.User{})
+	err = db.AutoMigrate(&models.File{}, &models.User{}, &models.PasswordResetToken{})
 	if err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
-	}
-	err = db.AutoMigrate(&models.File{})
-	if err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
+		log.Fatalf("Failed to migrate models: %v", err)
 	}
 	log.Println("Database migration completed successfully.")
 }

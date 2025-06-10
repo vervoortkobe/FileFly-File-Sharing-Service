@@ -7,28 +7,40 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-var list []struct {
-	Name    string
-	Address string
+type MailConfig struct {
+	SMTPServer   string
+	SMTPPort     int
+	SMTPUser     string
+	SMTPPassword string
+	FromEmail    string
+	FromName     string
 }
 
-func SendMail() {
-	d := gomail.NewDialer("smtp.example.com", 587, "user", "123456")
-	s, err := d.Dial()
-	if err != nil {
-		panic(err)
+func SendEmail(config MailConfig, recipientName, recipientAddress, subject, htmlBody string) error {
+	if config.SMTPServer == "" || config.SMTPPort == 0 || config.FromEmail == "" {
+		log.Println("SMTP server, port, or fromEmail not configured. Email not sent.")
+		return fmt.Errorf("mail configuration incomplete")
 	}
 
 	m := gomail.NewMessage()
-	for _, r := range list {
-		m.SetHeader("From", "no-reply@example.com")
-		m.SetAddressHeader("To", r.Address, r.Name)
-		m.SetHeader("Subject", "Password Reset Request")
-		m.SetBody("text/html", fmt.Sprintf("Hello %s!", r.Name))
+	m.SetHeader("From", m.FormatAddress(config.FromEmail, config.FromName))
+	m.SetAddressHeader("To", recipientAddress, recipientName)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/html", htmlBody)
 
-		if err := gomail.Send(s, m); err != nil {
-			log.Printf("Could not send email to %q: %v", r.Address, err)
-		}
-		m.Reset()
+	var d *gomail.Dialer
+	if config.SMTPUser != "" && config.SMTPPassword != "" {
+		d = gomail.NewDialer(config.SMTPServer, config.SMTPPort, config.SMTPUser, config.SMTPPassword)
+	} else {
+		d = &gomail.Dialer{Host: config.SMTPServer, Port: config.SMTPPort}
+		log.Println("Attempting to send email without explicit SMTP username/password authentication.")
 	}
+
+	if err := d.DialAndSend(m); err != nil {
+		log.Printf("Could not send email to %q: %v", recipientAddress, err)
+		return err
+	}
+
+	log.Printf("Email sent to %q with subject %q", recipientAddress, subject)
+	return nil
 }
