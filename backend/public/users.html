@@ -44,7 +44,6 @@
 
     th {
       background-color: #3498db;
-      /* A pleasant blue */
       color: white;
       font-weight: 600;
       text-transform: uppercase;
@@ -56,7 +55,10 @@
     }
 
     tr:hover {
-      background-color: #e9ecef;
+      background-color: #e0e9ef;
+      /* Slightly darker hover for clickable rows */
+      cursor: pointer;
+      /* Indicate row is clickable */
     }
 
     .no-users {
@@ -76,43 +78,50 @@
       color: #3498db;
     }
 
-    /* Optional: Style for role or tier badges */
     .badge {
       padding: 0.3em 0.6em;
       font-size: 0.85em;
       font-weight: 600;
       border-radius: 0.25rem;
       color: #fff;
+      display: inline-block;
+      /* Helps with alignment if needed */
     }
 
     .badge-admin {
       background-color: #e74c3c;
-      /* Red */
     }
 
     .badge-editor {
       background-color: #f39c12;
-      /* Orange */
     }
 
     .badge-user {
       background-color: #2ecc71;
-      /* Green */
     }
 
     .badge-premium {
       background-color: #9b59b6;
-      /* Purple */
     }
 
     .badge-standard {
       background-color: #3498db;
-      /* Blue */
     }
 
     .badge-basic {
       background-color: #7f8c8d;
-      /* Gray */
+    }
+
+    /* Action link styling */
+    .action-link {
+      color: #007bff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .action-link:hover {
+      text-decoration: underline;
+      color: #0056b3;
     }
   </style>
 </head>
@@ -131,11 +140,11 @@
           <th>Role</th>
           <th>Tier</th>
           <th>Registered At</th>
-          <!-- Add more <th> elements if you select more fields -->
+          <th>Actions</th> {/* New Actions column */}
         </tr>
       </thead>
       <tbody>
-        <!-- User rows will be inserted here by JavaScript -->
+        {/* User rows will be inserted here by JavaScript */}
       </tbody>
     </table>
     <div id="noUsersMessage" class="no-users" style="display: none;">
@@ -152,7 +161,7 @@
 
       fetch('/api/users') // Your backend API endpoint
         .then(response => {
-          loadingMessage.style.display = 'none'; // Hide loading message
+          loadingMessage.style.display = 'none';
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
           }
@@ -160,9 +169,14 @@
         })
         .then(users => {
           if (users && users.length > 0) {
-            usersTable.style.display = ''; // Show table
+            usersTable.style.display = '';
             users.forEach(user => {
               const row = tableBody.insertRow();
+              // Make the entire row clickable
+              row.style.cursor = 'pointer';
+              row.addEventListener('click', function () {
+                window.location.href = `/profile.html?userid=${user.ID}`;
+              });
 
               const cellId = row.insertCell();
               cellId.textContent = user.ID;
@@ -171,38 +185,46 @@
               cellEmail.textContent = user.email;
 
               const cellRole = row.insertCell();
-              // Optional: Add a badge for role
               const roleBadge = document.createElement('span');
               roleBadge.classList.add('badge');
-              roleBadge.classList.add(`badge-${(user.role || 'default').toLowerCase()}`); // e.g., badge-admin
+              roleBadge.classList.add(`badge-${(user.role || 'default').toLowerCase()}`);
               roleBadge.textContent = user.role || 'N/A';
               cellRole.appendChild(roleBadge);
-              // cellRole.textContent = user.role || 'N/A'; // Simpler version
 
               const cellTier = row.insertCell();
-              // Optional: Add a badge for tier
               const tierBadge = document.createElement('span');
               tierBadge.classList.add('badge');
-              tierBadge.classList.add(`badge-${(user.tier || 'default').toLowerCase()}`); // e.g., badge-premium
+              tierBadge.classList.add(`badge-${(user.tier || 'default').toLowerCase()}`);
               tierBadge.textContent = user.tier || 'N/A';
               cellTier.appendChild(tierBadge);
-              // cellTier.textContent = user.tier || 'N/A'; // Simpler version
-
 
               const cellCreatedAt = row.insertCell();
-              cellCreatedAt.textContent = user.CreatedAt ? new Date(user.CreatedAt).toLocaleString() : 'N/A';
+              // Ensure correct field name from your API (ID, username, email, role, tier, createdAt, updatedAt)
+              // If your API returns 'createdAt' (lowercase c), use user.createdAt
+              // If your API returns 'CreatedAt' (uppercase C like in GORM model), use user.CreatedAt
+              cellCreatedAt.textContent = user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A';
 
-              // Add more cells if you select more fields
-              // const cellSomeOtherField = row.insertCell();
-              // cellSomeOtherField.textContent = user.someOtherField || 'N/A';
+
+              // Actions cell with a "View Profile" link
+              const cellActions = row.insertCell();
+              const profileLink = document.createElement('a');
+              profileLink.href = `/profile.html?userid=${user.ID}`;
+              profileLink.textContent = 'View Profile';
+              profileLink.classList.add('action-link');
+              // Prevent row click from triggering if the link itself is clicked
+              profileLink.addEventListener('click', function (event) {
+                event.stopPropagation();
+              });
+              cellActions.appendChild(profileLink);
+
             });
           } else {
-            noUsersMessage.style.display = 'block'; // Show "no users" message
+            noUsersMessage.style.display = 'block';
           }
         })
         .catch(error => {
           console.error('Error fetching users:', error);
-          loadingMessage.style.display = 'none'; // Hide loading message
+          loadingMessage.style.display = 'none';
           noUsersMessage.textContent = `Error loading users: ${error.message}. Please check the console.`;
           noUsersMessage.style.display = 'block';
           noUsersMessage.style.color = 'red';
