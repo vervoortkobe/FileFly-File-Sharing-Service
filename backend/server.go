@@ -11,6 +11,7 @@ import (
 	"server/models"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 )
@@ -36,6 +37,13 @@ func main() {
 
 	app.Use(logger.New())
 
+	app.Use(logger.New())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+		AllowMethods: "GET, POST, PUT, DELETE, OPTIONS",
+	}))
+
 	app.Static("/", "./public")
 
 	app.Get("/", func(c *fiber.Ctx) error {
@@ -55,6 +63,9 @@ func main() {
 	api.Get("/files", handlers.ListFiles)
 	api.Post("/upload", handlers.UploadFile)
 	api.Get("/download/:id", handlers.DownloadFile)
+
+	api.Post("/password-reset/request", handlers.RequestPasswordReset)
+	api.Post("/password-reset/confirm", handlers.ResetPassword)
 
 	fmt.Printf("[⚡] WebServer listening on [http://localhost:%s]!\n", PORT)
 	log.Fatal(app.Listen(":" + PORT))
