@@ -8,8 +8,10 @@ import (
 	"server/auth"
 	"server/db"
 	"server/handlers"
+	"server/models"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -28,16 +30,31 @@ func main() {
 	defer db.Close()
 	db.Migrate(db.GetDB())
 
-	app := fiber.New()
-
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello world!")
+	app := fiber.New(fiber.Config{
+		BodyLimit: 50 * 1024 * 1024,
 	})
 
-	app.Post("/upload", handlers.UploadFile)
+	app.Use(logger.New())
 
-	app.Post("/register", auth.HandleRegisterUser)
-	app.Post("/login", auth.HandleLoginUser)
+	app.Static("/", "./public")
+
+	app.Get("/", func(c *fiber.Ctx) error {
+		var fileCount int64
+		db.GetDB().Model(&models.File{}).Count(&fileCount)
+		return c.SendString("Files: " + fmt.Sprintf("%d", fileCount))
+	})
+
+	api := app.Group("/api")
+
+	api.Post("/register", auth.HandleRegisterUser)
+	api.Post("/login", auth.HandleLoginUser)
+
+	api.Get("/users", handlers.ListUsers)
+	api.Get("/users/:id", handlers.GetUserByID)
+	api.Get("/users/:id/files", handlers.GetUserFiles)
+	api.Get("/files", handlers.ListFiles)
+	api.Post("/upload", handlers.UploadFile)
+	api.Get("/download/:id", handlers.DownloadFile)
 
 	fmt.Printf("[⚡] WebServer listening on [http://localhost:%s]!\n", PORT)
 	log.Fatal(app.Listen(":" + PORT))

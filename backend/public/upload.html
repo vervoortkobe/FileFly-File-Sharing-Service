@@ -106,7 +106,7 @@
 
       try {
         // The action URL should match your Fiber server's endpoint
-        const response = await fetch('http://localhost:3000/upload', {
+        const response = await fetch('http://localhost:3000/api/upload', {
           method: 'POST',
           body: formData,
           // No 'Content-Type' header needed here;

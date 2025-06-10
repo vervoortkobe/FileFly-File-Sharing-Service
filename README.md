@@ -6,3 +6,14 @@ It even supports PDF, Powerpoint- and Word-document view!
 
 You can self-host this by following these steps:  
 [UNDER MAINTENANCE]
+
+Todo List:
+
+- password reset
+- google oauth login
+- security (accounts)
+- privacy based sharing (timer?)
+- file deletion
+- PDF viewer
+- ...
+- frontend

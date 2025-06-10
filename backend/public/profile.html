@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Profile</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f6f8;
+      color: #333;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      background-color: #fff;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    h1,
+    h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    .profile-info dl {
+      display: grid;
+      grid-template-columns: max-content auto;
+      gap: 10px 20px;
+    }
+
+    .profile-info dt {
+      font-weight: 600;
+      color: #555;
+    }
+
+    .profile-info dd {
+      margin-left: 0;
+    }
+
+    .files-list {
+      margin-top: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th,
+    td {
+      border: 1px solid #dfe6e9;
+      padding: 12px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      background-color: #3498db;
+      color: white;
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
+    tr:hover {
+      background-color: #e9ecef;
+    }
+
+    a {
+      color: #2980b9;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .message {
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 5px;
+      text-align: center;
+    }
+
+    .message.loading {
+      background-color: #e0f7fa;
+      color: #007bff;
+    }
+
+    .message.error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .message.no-data {
+      background-color: #e9ecef;
+      color: #495057;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>User Profile</h1>
+
+    <div id="profileLoading" class="message loading">Loading profile information...</div>
+    <div id="profileError" class="message error" style="display: none;"></div>
+    <div id="profileDetails" style="display: none;">
+      <h2>Profile Information</h2>
+      <div class="profile-info">
+        <dl>
+          <dt>User ID:</dt>
+          <dd id="userId"></dd>
+          <dt>Username:</dt>
+          <dd id="userUsername"></dd>
+          <dt>Email:</dt>
+          <dd id="userEmail"></dd>
+          <dt>Role:</dt>
+          <dd id="userRole"></dd>
+          <dt>Tier:</dt>
+          <dd id="userTier"></dd>
+          <dt>Joined:</dt>
+          <dd id="userJoined"></dd>
+        </dl>
+      </div>
+    </div>
+
+    <div id="filesLoading" class="message loading" style="display: none;">Loading user files...</div>
+    <div id="filesError" class="message error" style="display: none;"></div>
+    <div class="files-list">
+      <h2>User Files</h2>
+      <table id="userFilesTable" style="display: none;">
+        <thead>
+          <tr>
+            <th>File ID</th>
+            <th>Filename</th>
+            <th>Content Type</th>
+            <th>Uploaded At</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- File rows will be inserted here -->
+        </tbody>
+      </table>
+      <div id="noFilesMessage" class="message no-data" style="display: none;">This user has no files uploaded.</div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      const params = new URLSearchParams(window.location.search);
+      const userId = params.get('userid');
+
+      const profileLoadingEl = document.getElementById('profileLoading');
+      const profileErrorEl = document.getElementById('profileError');
+      const profileDetailsEl = document.getElementById('profileDetails');
+
+      const filesLoadingEl = document.getElementById('filesLoading');
+      const filesErrorEl = document.getElementById('filesError');
+      const userFilesTableEl = document.getElementById('userFilesTable');
+      const userFilesTableBodyEl = userFilesTableEl.querySelector('tbody');
+      const noFilesMessageEl = document.getElementById('noFilesMessage');
+
+      if (!userId) {
+        profileLoadingEl.style.display = 'none';
+        profileErrorEl.textContent = 'User ID not provided in URL (e.g., profile.html?userid=1)';
+        profileErrorEl.style.display = 'block';
+        return;
+      }
+
+      // --- Fetch User Profile Information ---
+      try {
+        const profileResponse = await fetch(`/api/users/${userId}`);
+        profileLoadingEl.style.display = 'none';
+
+        if (!profileResponse.ok) {
+          const errorData = await profileResponse.json().catch(() => ({ error: 'Failed to parse error response' }));
+          throw new Error(`Failed to load profile: ${profileResponse.status} - ${errorData.error || profileResponse.statusText}`);
+        }
+        const userData = await profileResponse.json();
+
+        document.getElementById('userId').textContent = userData.ID;
+        document.getElementById('userUsername').textContent = userData.username || 'N/A';
+        document.getElementById('userEmail').textContent = userData.email || 'N/A';
+        document.getElementById('userRole').textContent = userData.role || 'N/A';
+        document.getElementById('userTier').textContent = userData.tier || 'N/A';
+        document.getElementById('userJoined').textContent = userData.CreatedAt ? new Date(userData.CreatedAt).toLocaleDateString() : 'N/A';
+        profileDetailsEl.style.display = 'block';
+
+        // --- Now Fetch User Files ---
+        await fetchUserFiles(userId);
+
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        profileLoadingEl.style.display = 'none';
+        profileErrorEl.textContent = error.message;
+        profileErrorEl.style.display = 'block';
+        filesLoadingEl.style.display = 'none'; // Don't try to load files if profile fails
+      }
+
+      async function fetchUserFiles(currentUserId) {
+        filesLoadingEl.style.display = 'block';
+        userFilesTableEl.style.display = 'none';
+        noFilesMessageEl.style.display = 'none';
+        filesErrorEl.style.display = 'none';
+        userFilesTableBodyEl.innerHTML = ''; // Clear previous entries
+
+        try {
+          const filesResponse = await fetch(`/api/users/${currentUserId}/files`);
+          filesLoadingEl.style.display = 'none';
+
+          if (!filesResponse.ok) {
+            const errorData = await filesResponse.json().catch(() => ({ error: 'Failed to parse error response' }));
+            throw new Error(`Failed to load files: ${filesResponse.status} - ${errorData.error || filesResponse.statusText}`);
+          }
+          const filesData = await filesResponse.json();
+
+          if (filesData && filesData.length > 0) {
+            filesData.forEach(file => {
+              const row = userFilesTableBodyEl.insertRow();
+              row.insertCell().textContent = file.ID;
+              row.insertCell().textContent = file.FileName || 'N/A';
+              row.insertCell().textContent = file.ContentType || 'N/A';
+              row.insertCell().textContent = file.CreatedAt ? new Date(file.CreatedAt).toLocaleString() : 'N/A';
+
+              const actionsCell = row.insertCell();
+              const downloadLink = document.createElement('a');
+              downloadLink.href = `/api/files/${file.ID}`; // Assuming general download link by file ID
+              downloadLink.textContent = 'Download';
+              downloadLink.target = '_blank';
+              actionsCell.appendChild(downloadLink);
+            });
+            userFilesTableEl.style.display = 'table';
+          } else {
+            noFilesMessageEl.style.display = 'block';
+          }
+        } catch (error) {
+          console.error('Error fetching user files:', error);
+          filesLoadingEl.style.display = 'none';
+          filesErrorEl.textContent = error.message;
+          filesErrorEl.style.display = 'block';
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>
