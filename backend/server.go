@@ -50,6 +50,8 @@ func main() {
 	api.Post("/login", auth.HandleLoginUser)
 
 	api.Get("/users", handlers.ListUsers)
+	api.Get("/users/:id", handlers.GetUserByID)
+	api.Get("/users/:id/files", handlers.GetUserFiles)
 	api.Get("/files", handlers.ListFiles)
 	api.Post("/upload", handlers.UploadFile)
 	api.Get("/download/:id", handlers.DownloadFile)
